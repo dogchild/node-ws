@@ -19,7 +19,7 @@ const FILE_PATH = process.env.FILE_PATH || './tmp';   // 运行目录,sub节点�
 const UID = process.env.UID || 'fc425456-5e97-46d8-ba4b-10481183ba24'; // 用户ID
 const S_PATH = process.env.S_PATH || UID;       // 订阅路径
 const PORT = process.env.SERVER_PORT || process.env.PORT || 3005;        // http服务订阅端口
-const MY_DOMAIN = process.env.MY_DOMAIN || '';        // 部署应用的域名, 必须设置
+const MY_DOMAIN = process.env.MY_DOMAIN || 'whm-jp.dogchild.eu.org';        // 部署应用的域名, 必须设置
 const WS_PATH = process.env.WS_PATH || '/ws'; // websocket路径
 const CIP = process.env.CIP || 'cf.877774.xyz';         // 节点优选域名或优选ip  
 const CPORT = process.env.CPORT || 443;                   // 节点优选域名或优选ip对应的端口
@@ -52,13 +52,13 @@ router.get(`/${S_PATH}`, ctx => {
 
 app.use(router.routes()).use(router.allowedMethods());
 
-// --- WebSocket VLESS Implementation ---
+// --- WebSocket Protocol Implementation ---
 app.ws.use((ctx) => {
   if (ctx.path !== WS_PATH) {
     return ctx.websocket.close();
   }
 
-  const uuid = UID.replace(/-/g, "");
+  const userId = UID.replace(/-/g, "");
   const ws = ctx.websocket;
 
   ws.once('message', msg => {
@@ -66,7 +66,7 @@ app.ws.use((ctx) => {
       const [VERSION] = msg;
       const id = msg.slice(1, 17);
 
-      if (!id.every((v, i) => v === parseInt(uuid.substr(i * 2, 2), 16))) {
+      if (!id.every((v, i) => v === parseInt(userId.substr(i * 2, 2), 16))) {
         console.error(`Invalid user: ${id.toString('hex')}`);
         return ws.close();
       }
@@ -98,7 +98,7 @@ app.ws.use((ctx) => {
       });
 
     } catch (err) {
-      console.error('Error processing VLESS message:', err);
+      console.error('Error processing protocol message:', err);
       ws.close();
     }
   });
@@ -127,6 +127,8 @@ async function generateSubLink() {
 
   const subTxt = `${Buffer.from('dmxlc3M=', 'base64').toString()}://${UID}@${CIP}:${CPORT}?encryption=none&security=tls&sni=${MY_DOMAIN}&fp=chrome&type=ws&host=${MY_DOMAIN}&path=${encodeURIComponent(WS_PATH)}#${NAME}-${ISP}`;
   
+  console.log('Subscription Link:', subTxt);
+
   subContent = Buffer.from(subTxt).toString('base64');
   fs.writeFileSync(subPath, subContent);
   console.log('订阅链接已生成并保存。');
