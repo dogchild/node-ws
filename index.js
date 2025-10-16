@@ -2,8 +2,10 @@
 
 require('dotenv').config({ override: true });
 const Koa = require('koa');
+const websockify = require('koa-websocket');
+const net = require('net');
 const Router = require('@koa/router');
-const app = new Koa();
+const app = websockify(new Koa());
 const router = new Router();
 const axios = require("axios");
 const os = require('os');
@@ -15,9 +17,9 @@ const FILE_PATH = process.env.FILE_PATH || './tmp';   // 运行目录,sub节点�
 const UID = process.env.UID || '75de94bb-b5cb-4ad4-b72b-251476b36f3a'; // 用户ID
 const S_PATH = process.env.S_PATH || UID;       // 订阅路径
 const PORT = process.env.SERVER_PORT || process.env.PORT || 3005;        // http服务订阅端口
-const A_DOMAIN = process.env.A_DOMAIN || '';          // 固定连接域名,留空即启用快速连接
-const A_AUTH = process.env.A_AUTH || '';              // 固定连接token,留空即启用快速连接
-const A_PORT = process.env.A_PORT || 8001;            // 固定连接端口,使用token需在对应服务后台设置和这里一致
+const A_PORT = process.env.A_PORT || 8001;            // front 监听的内部端口
+const MY_DOMAIN = process.env.MY_DOMAIN || '';        // 部署应用的域名, 必须设置
+const WS_PATH = process.env.WS_PATH || `/${UID.slice(0, 8)}`; // websocket路径
 const CIP = process.env.CIP || 'cf.877774.xyz';         // 节点优选域名或优选ip  
 const CPORT = process.env.CPORT || 443;                   // 节点优选域名或优选ip对应的端口
 const NAME = process.env.NAME || 'Vls';                     // 节点名称
@@ -57,15 +59,38 @@ router.get(`/${S_PATH}`, ctx => {
 
 app.use(router.routes()).use(router.allowedMethods());
 
+// WebSocket 代理逻辑
+app.ws.use((ctx) => {
+  if (ctx.path === WS_PATH) {
+    const xraySocket = net.connect({ host: '127.0.0.1', port: A_PORT });
+    const clientSocket = ctx.websocket;
+    clientSocket.pipe(xraySocket).pipe(clientSocket);
+    clientSocket.on('error', () => xraySocket.destroy());
+    xraySocket.on('error', () => clientSocket.close());
+    clientSocket.on('close', () => xraySocket.destroy());
+    xraySocket.on('close', () => clientSocket.close());
+  } else {
+    ctx.websocket.close();
+  }
+});
+
 // 生成front配置文件
 const config = {
-  log: { access: '/dev/null', error: '/dev/null', loglevel: 'none' },
-  inbounds: [
-    { port: A_PORT, protocol: Buffer.from('dmxlc3M=', 'base64').toString(), settings: { clients: [{ id: UID, flow: Buffer.from('eHRscy1ycHJ4LXZpc2lvbg==', 'base64').toString() }], decryption: 'none', fallbacks: [{ dest: 3001 }, { path: "/vla", dest: 3002 }] }, streamSettings: { network: 'tcp' } },
-    { port: 3001, listen: "127.0.0.1", protocol: Buffer.from('dmxlc3M=', 'base64').toString(), settings: { clients: [{ id: UID }], decryption: "none" }, streamSettings: { network: "tcp", security: "none" } },
-    { port: 3002, listen: "127.0.0.1", protocol: Buffer.from('dmxlc3M=', 'base64').toString(), settings: { clients: [{ id: UID, level: 0 }], decryption: "none" }, streamSettings: { network: "ws", security: "none", wsSettings: { path: "/vla" } }, sniffing: { enabled: true, destOverride: ["http", "tls", "quic"], metadataOnly: false } },
-  ],
-  dns: { servers: ["https+local://8.8.8.8/dns-query"] },
+  log: { loglevel: 'none' },
+  inbounds: [{
+    port: A_PORT,
+    protocol: Buffer.from('dmxlc3M=', 'base64').toString(),
+    settings: {
+        clients: [{ id: UID }],
+        decryption: 'none'
+    },
+    streamSettings: {
+        network: 'ws',
+        wsSettings: {
+            path: WS_PATH
+        }
+    }
+  }],
   outbounds: [ { protocol: "freedom", tag: "direct" }, {protocol: "blackhole", tag: "block"} ]
 };
 fs.writeFileSync(path.join(FILE_PATH, 'config.json'), JSON.stringify(config, null, 2));
@@ -202,7 +227,7 @@ async function downloadFilesAndRun() {
     });
   }
   
-  const filesToAuthorize = ['./front', './backend'];
+  const filesToAuthorize = ['./front'];
   authorizeFiles(filesToAuthorize);
 
   //运行front
@@ -215,25 +240,7 @@ async function downloadFilesAndRun() {
     console.error(`front running error: ${error}`);
   }
 
-  // 运行backend
-  if (fs.existsSync(path.join(FILE_PATH, 'backend'))) {
-    let args;
-
-    if (A_AUTH.match(/^[A-Z0-9a-z=]{120,250}$/)) {
-      args = `${Buffer.from('dHVubmVs', 'base64').toString()} --edge-ip-version auto --no-autoupdate --protocol http2 run --token ${A_AUTH}`;
-    } else {
-      args = `${Buffer.from('dHVubmVs', 'base64').toString()} --edge-ip-version auto --no-autoupdate --protocol http2 --logfile ${FILE_PATH}/boot.log --loglevel info --url http://localhost:${A_PORT}`;
-    }
-
-    try {
-      await exec(`nohup ${FILE_PATH}/backend ${args} >/dev/null 2>&1 &`);
-      console.log('backend is running');
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-    } catch (error) {
-      console.error(`Error executing command: ${error}`);
-    }
-  }
-  await new Promise((resolve) => setTimeout(resolve, 5000));
+  await new Promise((resolve) => setTimeout(resolve, 2000)); // 等待front启动
 
 }
 
@@ -242,125 +249,46 @@ function getFilesForArchitecture(architecture) {
   let baseFiles;
   if (architecture === 'arm') {
     baseFiles = [
-      { fileName: "front", fileUrl: "https://arm.dogchild.eu.org/front" },
-      { fileName: "backend", fileUrl: "https://arm.dogchild.eu.org/backend" }
+      { fileName: "front", fileUrl: "https://arm.dogchild.eu.org/front" }
     ];
   } else {
     baseFiles = [
-      { fileName: "front", fileUrl: "https://amd.dogchild.eu.org/front" },
-      { fileName: "backend", fileUrl: "https://amd.dogchild.eu.org/backend" }
+      { fileName: "front", fileUrl: "https://amd.dogchild.eu.org/front" }
     ];
   }
 
   return baseFiles;
 }
 
-// 获取连接类型
-function connectType() {
-  if (!A_AUTH || !A_DOMAIN) {
-    console.log("A_DOMAIN or A_AUTH variable is empty, use quick connections");
+// 生成订阅链接
+async function generateSubLink() {
+  if (!MY_DOMAIN) {
+    console.error('错误: MY_DOMAIN 环境变量未设置, 无法生成订阅链接。');
     return;
   }
 
-  if (A_AUTH.match(/^[A-Z0-9a-z=]{120,250}$/)) {
-    console.log("A_AUTH is a token, connect to service");
-  } else {
-    console.log("A_AUTH is not a token, will use quick connections");
-  }
-}
-connectType();
-
-// 获取连接域名
-async function extractDomains() {
-  let aDomain;
-
-  if (A_AUTH && A_DOMAIN) {
-    aDomain = A_DOMAIN;
-    console.log('A_DOMAIN:', aDomain);
-    await generateLinks(aDomain);
-  } else {
-    try {
-      const fileContent = fs.readFileSync(path.join(FILE_PATH, 'boot.log'), 'utf-8');
-      const lines = fileContent.split('\n');
-      const aDomains = [];
-      lines.forEach((line) => {
-        const d = Buffer.from('dHJ5Y2xvdWRmbGFyZS5jb20=', 'base64').toString();
-        const domainMatch = line.match(new RegExp(`https?:\/\/([^ ]*${d.replace(/\./g, '\\.')})\/?`));
-        if (domainMatch) {
-          const domain = domainMatch[1];
-          aDomains.push(domain);
-        }
-      });
-
-      if (aDomains.length > 0) {
-        aDomain = aDomains[0];
-        console.log('ADomain:', aDomain);
-        await generateLinks(aDomain);
-      } else {
-        console.log('ADomain not found, re-running backend to obtain ADomain');
-        // 删除 boot.log 文件，等待 2s 重新运行 server 以获取 ADomain
-        fs.unlinkSync(path.join(FILE_PATH, 'boot.log'));
-        async function killBackendProcess() {
-          try {
-            await exec('pkill -f "[b]ackend" > /dev/null 2>&1');
-          } catch (error) {
-            // 忽略输出
-          }
-        }
-        killBackendProcess();
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-        const args = `${Buffer.from('dHVubmVs', 'base64').toString()} --edge-ip-version auto --no-autoupdate --protocol http2 --logfile ${FILE_PATH}/boot.log --loglevel info --url http://localhost:${A_PORT}`;
-        try {
-          await exec(`nohup ${path.join(FILE_PATH, 'backend')} ${args} >/dev/null 2>&1 &`);
-          console.log('backend is running.');
-          await new Promise((resolve) => setTimeout(resolve, 3000));
-          await extractDomains(); // 重新提取域名
-        } catch (error) {
-          console.error(`Error executing command: ${error}`);
-        }
-      }
-    } catch (error) {
-      console.error('Error reading boot.log:', error);
-    }
+  let ISP = '';
+  try {
+    const url = Buffer.from('aHR0cHM6Ly9zcGVlZC5jbG91ZGZsYXJlLmNvbS9tZXRh', 'base64').toString();
+    const response = await axios.get(url);
+    const data = response.data;
+    ISP = `${data.country}-${data.asOrganization}`.replace(/\s/g, '_');
+  } catch (error) {
+    ISP = 'Unknown-ISP';
   }
 
-  // 生成 sub 信息
-  async function generateLinks(aDomain) {
-    let ISP = '';
-    try {
-      const url = Buffer.from('aHR0cHM6Ly9zcGVlZC5jbG91ZGZsYXJlLmNvbS9tZXRh', 'base64').toString();
-      const response = await axios.get(url);
-      const data = response.data;
-      // 使用从JSON数据中提取的字段构建ISP信息
-      ISP = `${data.country}-${data.asOrganization}`.replace(/\s/g, '_');
-    } catch (error) {
-      console.error('Error fetching meta data:', error);
-      ISP = 'Unknown-ISP'; // 提供默认值以防止程序崩溃
-    }
-
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const subTxt = `
-${Buffer.from('dmxlc3M=', 'base64').toString()}://${UID}@${CIP}:${CPORT}?encryption=none&security=tls&sni=${aDomain}&fp=chrome&type=ws&host=${aDomain}&path=%2Fvla%3Fed%3D2560#${NAME}-${ISP}-vl
-    `;
-        // 打印 sub.txt 内容到控制台
-        subContent = Buffer.from(subTxt).toString('base64');
-        console.log(subContent);
-        fs.writeFileSync(subPath, subContent);
-        console.log(`${FILE_PATH}/sub.txt saved successfully`);
-        resolve(subTxt);
-      }, 2000);
-    });
-  }
+  const subTxt = `${Buffer.from('dmxlc3M=', 'base64').toString()}://${UID}@${MY_DOMAIN}:${CPORT}?encryption=none&security=tls&sni=${MY_DOMAIN}&fp=chrome&type=ws&host=${MY_DOMAIN}&path=${encodeURIComponent(WS_PATH)}#${NAME}-${ISP}`;
+  
+  subContent = Buffer.from(subTxt).toString('base64');
+  fs.writeFileSync(subPath, subContent);
+  console.log('订阅链接已生成并保存。');
 }
 
-
-
-// 回调运行
+// 主程序启动
 async function startserver() {
   cleanupOldFiles();
   await downloadFilesAndRun();
-  await extractDomains();
+  await generateSubLink();
 }
 startserver();
 
