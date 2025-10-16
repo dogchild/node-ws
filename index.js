@@ -11,8 +11,7 @@ const axios = require("axios");
 const os = require('os');
 const fs = require("fs");
 const path = require("path");
-const { promisify } = require('util');
-const exec = promisify(require('child_process').exec);
+const { spawn } = require('child_process');
 const FILE_PATH = process.env.FILE_PATH || './tmp';   // 运行目录,sub节点文件保存目录
 const UID = process.env.UID || 'fc425456-5e97-46d8-ba4b-10481183ba24'; // 用户ID
 const S_PATH = process.env.S_PATH || UID;       // 订阅路径
@@ -230,9 +229,17 @@ async function downloadFilesAndRun() {
   authorizeFiles(filesToAuthorize);
 
   //运行front
-  const command1 = `nohup ${FILE_PATH}/front -c ${FILE_PATH}/config.json >/dev/null 2>&1 &`;
+  const frontPath = path.join(FILE_PATH, 'front');
+  const configPath = path.join(FILE_PATH, 'config.json');
   try {
-    await exec(command1);
+    const frontProcess = spawn(frontPath, ['-c', configPath], {
+      detached: true,
+      stdio: 'ignore'
+    });
+    frontProcess.on('error', (err) => {
+      console.error('Failed to start front process:', err);
+    });
+    frontProcess.unref();
     console.log('front is running');
     await new Promise((resolve) => setTimeout(resolve, 1000));
   } catch (error) {

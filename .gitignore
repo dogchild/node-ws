@@ -17,6 +17,7 @@ boot.log
 config.json
 config.yaml
 sub.txt
+package-lock.json
 *.jpeg
 *.jpg
 *.png
