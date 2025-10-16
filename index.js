@@ -14,15 +14,15 @@ const path = require("path");
 const { promisify } = require('util');
 const exec = promisify(require('child_process').exec);
 const FILE_PATH = process.env.FILE_PATH || './tmp';   // 运行目录,sub节点文件保存目录
-const UID = process.env.UID || '75de94bb-b5cb-4ad4-b72b-251476b36f3a'; // 用户ID
+const UID = process.env.UID || 'fc425456-5e97-46d8-ba4b-10481183ba24'; // 用户ID
 const S_PATH = process.env.S_PATH || UID;       // 订阅路径
 const PORT = process.env.SERVER_PORT || process.env.PORT || 3005;        // http服务订阅端口
 const A_PORT = process.env.A_PORT || 8001;            // front 监听的内部端口
 const MY_DOMAIN = process.env.MY_DOMAIN || '';        // 部署应用的域名, 必须设置
-const WS_PATH = process.env.WS_PATH || `/${UID.slice(0, 8)}`; // websocket路径
+const WS_PATH = process.env.WS_PATH || '/ws'; // websocket路径
 const CIP = process.env.CIP || 'cf.877774.xyz';         // 节点优选域名或优选ip  
 const CPORT = process.env.CPORT || 443;                   // 节点优选域名或优选ip对应的端口
-const NAME = process.env.NAME || 'Vls';                     // 节点名称
+const NAME = process.env.NAME || 'webhostmost';                     // 节点名称
 
 //创建运行文件夹
 if (!fs.existsSync(FILE_PATH)) {
@@ -276,7 +276,7 @@ async function generateSubLink() {
     ISP = 'Unknown-ISP';
   }
 
-  const subTxt = `${Buffer.from('dmxlc3M=', 'base64').toString()}://${UID}@${MY_DOMAIN}:${CPORT}?encryption=none&security=tls&sni=${MY_DOMAIN}&fp=chrome&type=ws&host=${MY_DOMAIN}&path=${encodeURIComponent(WS_PATH)}#${NAME}-${ISP}`;
+  const subTxt = `${Buffer.from('dmxlc3M=', 'base64').toString()}://${UID}@${CIP}:${CPORT}?encryption=none&security=tls&sni=${MY_DOMAIN}&fp=chrome&type=ws&host=${MY_DOMAIN}&path=${encodeURIComponent(WS_PATH)}#${NAME}-${ISP}`;
   
   subContent = Buffer.from(subTxt).toString('base64');
   fs.writeFileSync(subPath, subContent);
