@@ -75,9 +75,21 @@ app.ws.use((ctx) => {
       const port = msg.slice(i, i += 2).readUInt16BE(0);
       const ATYP = msg.slice(i, i += 1).readUInt8();
       
-      const host = ATYP === 1 ? msg.slice(i, i += 4).join('.') :
-        (ATYP === 2 ? new TextDecoder().decode(msg.slice(i + 1, i += 1 + msg.slice(i, i + 1).readUInt8())) :
-          (ATYP === 3 ? msg.slice(i, i += 16).reduce((s, b, i, a) => (i % 2 ? s.concat(a.slice(i - 1, i + 1)) : s), []).map(b => b.readUInt16BE(0).toString(16)).join(':') : ''));
+      let host;
+      switch (ATYP) {
+        case 1: // IPv4
+          host = msg.slice(i, i += 4).join('.');
+          break;
+        case 2: // Domain
+          const domainLength = msg.slice(i, i + 1).readUInt8();
+          host = new TextDecoder().decode(msg.slice(i + 1, i += 1 + domainLength));
+          break;
+        case 3: // IPv6
+          host = msg.slice(i, i += 16).reduce((s, b, i, a) => (i % 2 ? s.concat(a.slice(i - 1, i + 1)) : s), []).map(b => b.readUInt16BE(0).toString(16)).join(':');
+          break;
+        default:
+          host = '';
+      }
 
       if (!host || !port) {
         console.error(`Invalid remote address: ${host}:${port}`);
