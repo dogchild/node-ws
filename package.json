@@ -1,12 +1,12 @@
 {
-  "name": "nodejs-argo-x",
+  "name": "nodejs-x",
   "version": "2.0.1",
   "description": "A Node.js tool that provides x subscription links via A.",
   "main": "index.js",
   "author": "dogchild",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dogchild/nodejs-argo-x.git"
+    "url": "git+https://github.com/dogchild/nodejs-x.git"
   },
   "license": "MIT",
   "private": false,
@@ -14,7 +14,7 @@
     "start": "node index.js"
   },
   "bin": {
-    "nodejs-argo-x": "index.js"
+    "nodejs-x": "index.js"
   },
   "files": [
     "index.js",

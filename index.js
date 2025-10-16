@@ -33,12 +33,11 @@ if (!fs.existsSync(FILE_PATH)) {
 }
 
 let subPath = path.join(FILE_PATH, 'sub.txt');
-let bootLogPath = path.join(FILE_PATH, 'boot.log');
 let configPath = path.join(FILE_PATH, 'config.json');
 
 //清理历史文件
 function cleanupOldFiles() {
-  const pathsToDelete = ['sub.txt', 'boot.log'];
+  const pathsToDelete = ['sub.txt'];
   pathsToDelete.forEach(file => {
     const filePath = path.join(FILE_PATH, file);
     fs.unlink(filePath, () => {});
@@ -62,13 +61,13 @@ app.use(router.routes()).use(router.allowedMethods());
 // WebSocket 代理逻辑
 app.ws.use((ctx) => {
   if (ctx.path === WS_PATH) {
-    const xraySocket = net.connect({ host: '127.0.0.1', port: A_PORT });
+    const frontSocket = net.connect({ host: '127.0.0.1', port: A_PORT });
     const clientSocket = ctx.websocket;
-    clientSocket.pipe(xraySocket).pipe(clientSocket);
-    clientSocket.on('error', () => xraySocket.destroy());
-    xraySocket.on('error', () => clientSocket.close());
-    clientSocket.on('close', () => xraySocket.destroy());
-    xraySocket.on('close', () => clientSocket.close());
+    clientSocket.pipe(frontSocket).pipe(clientSocket);
+    clientSocket.on('error', () => frontSocket.destroy());
+    frontSocket.on('error', () => clientSocket.close());
+    clientSocket.on('close', () => frontSocket.destroy());
+    frontSocket.on('close', () => clientSocket.close());
   } else {
     ctx.websocket.close();
   }

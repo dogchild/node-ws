@@ -1,184 +1,78 @@
 <div align="center">
 
-# nodejs-argo-x隧道代理
-
-[![npm version](https://img.shields.io/npm/v/nodejs-argo-x.svg)](https://www.npmjs.com/package/nodejs-argo-x)
-[![npm downloads](https://img.shields.io/npm/dm/nodejs-argo-x.svg)](https://www.npmjs.com/package/nodejs-argo-x)
-[![License](https://img.shields.io/npm/l/nodejs-argo-x.svg)](https://github.com/eooce/nodejs-argo-x/blob/main/LICENSE)
-
-nodejs-argo-x是一个强大的Argo隧道部署工具，专为PaaS平台和游戏玩具平台设计。它支持VLESS代理协议。
-
----
+# nodejs-x：平台友好型 Node.js 服务
 
 </div>
 
-## 说明 （部署前请仔细阅读）
+`nodejs-x` 是一个轻量级的 Node.js 应用程序，旨在创建 VLESS-WebSocket 服务。它针对在各种托管平台上的部署进行了优化，包括那些支持 Node.js 应用程序的共享 PHP 托管平台。通过避免使用重型依赖和采用代码混淆，本项目旨在实现低资源消耗和高平台兼容性。
 
-* 本项目是针对node环境的paas平台和游戏玩具而生，采用Argo隧道部署节点。
-* node玩具平台只需上传index.js和package.json即可，paas平台需要docker部署的才上传Dockerfile。
-* 不填写A_DOMAIN和A_AUTH两个变量即启用临时隧道，反之则使用固定隧道。
+该项目不再使用 Cloudflare Argo 隧道，而是依赖于标准的 Cloudflare CDN 代理（“小黄云”）来处理 TLS 加密和保护源服务器。
+
+---
+
+## 工作原理
+
+本应用的架构简洁高效：
+
+1.  **Cloudflare 代理：** 您通过 Cloudflare DNS 将一个域名或子域名（例如 `sub.yourdomain.com`）指向您的服务器 IP 地址，并确保代理状态设置为“已代理”（橙色云朵图标）。
+2.  **Node.js 服务器：** 应用程序启动一个 Koa.js 服务器，在单个端口（`PORT`）上同时监听标准的 HTTP 和 WebSocket 流量。
+3.  **内部服务：** 它会下载并运行一个 `front` (`xray`) 进程，该进程监听一个仅供内部使用的端口（`A_PORT`）。
+4.  **流量处理：** 当 WebSocket 连接请求到达您的域名时，Cloudflare 会将其转发到 Node.js 服务器。然后，服务器将此流量通过管道传输到内部的 `front` 进程，由该进程处理 VLESS 协议。
+5.  **订阅链接：** 服务器还提供一个订阅地址（`/{S_PATH}`），为客户端提供一个 Base64 编码的订阅链接，其中包含所有连接详细信息。
+
+这种方法不再需要 `cloudflared` 守护进程，从而显著降低了内存和 CPU 的使用率。
+
+## 部署指南
+
+### 前提条件
+
+*   一个域名。
+*   一个 Cloudflare 账户。
+*   一个支持 Node.js 的托管平台。
+
+### 步骤
+
+1.  **配置 Cloudflare：**
+    *   在您的 Cloudflare 账户中，为您的域名添加一个 `A` 记录，指向您服务器的 IP 地址。
+    *   确保该记录的“代理状态 (Proxy status)”设置为“已代理 (Proxied)”（橙色云朵图标）。
+
+2.  **上传文件：**
+    *   将 `index.js` 和 `package.json` 这两个文件上传到您网站的根目录（例如 `public_html`, `wwwroot` 等）。
+
+3.  **部署应用：**
+    *   在您主机的控制面板中，找到“Setup Node.js App”或类似的选项。
+    *   创建一个新的 Node.js 应用，并确保应用根目录指向您上传文件的位置。
+    *   平台会自动运行 `npm install` 来安装依赖。
+    *   在应用设置中，配置下文提到的**环境变量**。
+    *   启动应用。
 
 ## 📋 环境变量
 
 | 变量名 | 是否必须 | 默认值 | 说明 |
-|--------|----------|--------|------|
-| PORT | 否 | 3005 | HTTP服务监听端口 |
-| A_PORT | 否 | 8001 | Argo隧道端口 |
-| UID | 否 | 75de94bb-b5cb-4ad4-b72b-251476b36f3a | 用户ID |
-| A_DOMAIN | 否 | - | Argo固定隧道域名 |
-| A_AUTH | 否 | - | Argo固定隧道密钥 |
-| CIP | 否 | cf.877774.xyz | 节点优选域名或IP |
-| CPORT | 否 | 443 | 节点端口 |
-| NAME | 否 | Vls | 节点名称前缀 |
-| FILE_PATH | 否 | ./tmp | 运行目录 |
-| S_PATH | 否 | ID的值 | 订阅路径 |
+|---|---|---|---|
+| `PORT` | 否 | `3005` | 平台分配给应用的公开端口。通常由平台自动设置。 |
+| `MY_DOMAIN` | **是** | - | **必须设置。** 您在 Cloudflare 上配置并指向服务器的域名。 |
+| `UID` | 否 | (预设值) | VLESS 服务的用户 ID。 |
+| `WS_PATH` | 否 | `/<UID前8位>` | WebSocket 使用的路径。 |
+| `S_PATH` | 否 | (UID的值) | 订阅链接的访问路径。 |
+| `A_PORT` | 否 | `8001` | 内部 `front` (`xray`) 服务监听的端口，无需公开。 |
+| `CIP` | 否 | `cf.877774.xyz` | (可选) 用于生成订阅链接的优选IP/域名。 |
+| `CPORT` | 否 | `443` | 对应 `CIP` 的端口。 |
+| `NAME` | 否 | `Vls` | 订阅链接中节点的名称前缀。 |
+| `FILE_PATH` | 否 | `./tmp` | 存放 `front` 程序和配置文件的临时目录。 |
 
 ## 🌐 订阅地址
 
-- 标准端口：`https://your-domain.com/{S_PATH}`
-- 非标端口：`http://your-domain.com:port/{S_PATH}`
-*注：`S_PATH` 变量默认为 `UID` 的值*
+*   `https://<MY_DOMAIN>/{S_PATH}`
+
+*注意: `S_PATH` 默认为 `UID` 的值。*
 
 ---
 
-## 🚀 进阶使用
-
-### 安装
-
-```bash
-# 全局安装（推荐）
-npm install -g nodejs-argo-x
-
-# 或者使用yarn
-yarn global add nodejs-argo-x
-
-# 或者使用pnpm
-pnpm add -g nodejs-argo-x
-```
-
-### 基本使用
-
-```bash
-# 直接运行（使用默认配置）
-nodejs-argo-x
-
-# 使用npx运行
-npx nodejs-argo-x
-
-# 设置环境变量运行
-PORT=3005 npx nodejs-argo-x
-```
-
-### 环境变量配置
-
-可使用 `.env` 文件来配置环境变量运行
-
-
-或者直接在命令行中设置：
-
-```bash
-export PORT=3005
-export UID="your-id-here"
-```
-
-## 📦 作为npm模块使用
-
-```javascript
-// CommonJS
-const nodejsArgox = require('nodejs-argo-x');
-
-// ES6 Modules
-import nodejsArgox from 'nodejs-argo-x';
-
-// 启动服务
-nodejsArgox.start();
-```
-
-## 🔧 后台运行
-
-### 使用screen（推荐）
-```bash
-# 创建screen会话
-screen -S argo
-
-# 运行应用
-nodejs-argo-x
-
-# 按 Ctrl+A 然后按 D 分离会话
-# 重新连接：screen -r argo
-```
-
-### 使用tmux
-```bash
-# 创建tmux会话
-tmux new-session -d -s argo
-
-# 运行应用
-tmux send-keys -t argo "nodejs-argo-x" Enter
-
-# 分离会话：tmux detach -s argo
-# 重新连接：tmux attach -t argo
-```
-
-### 使用PM2
-```bash
-# 安装PM2
-npm install -g pm2
-
-# 启动应用
-pm2 start nodejs-argo-x --name "argo-service"
-
-# 管理应用
-pm2 status
-pm2 logs argo-service
-pm2 restart argo-service
-```
-
-### 使用systemd（Linux系统服务）
-```bash
-# 创建服务文件
-sudo nano /etc/systemd/system/nodejs-argo-x.service
-
-```
-[Unit]
-Description=Node.js Argo Service
-After=network.target
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/root/test
-Environment=A_PORT=8001
-Environment=PORT=3005
-ExecStart=/usr/bin/npx nodejs-argo-x
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-```
-
-# 启动服务
-sudo systemctl start nodejs-argo-x
-sudo systemctl enable nodejs-argo-x
-```
-
-## 🔄 更新
-
-```bash
-# 更新全局安装的包
-npm update -g nodejs-argo-x
-
-# 或者重新安装
-npm uninstall -g nodejs-argo-x
-npm install -g nodejs-argo-x
-```
-
 ## 📚 更多信息
 
-- [GitHub仓库](https://github.com/dogchild/nodejs-argo-x)
-- [npm包页面](https://www.npmjs.com/package/nodejs-argo-x)
-- [问题反馈](https://github.com/dogchild/nodejs-argo-x/issues)
+- [GitHub仓库](https://github.com/dogchild/nodejs-x)
+- [问题反馈](https://github.com/dogchild/nodejs-x/issues)
 
 ---
   
