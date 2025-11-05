@@ -152,9 +152,10 @@ async function generateSubLink() {
 
   const subTxt = `${Buffer.from('dmxlc3M=', 'base64').toString()}://${UID}@${CIP}:${CPORT}?encryption=none&security=tls&sni=${MY_DOMAIN}&fp=chrome&type=ws&host=${MY_DOMAIN}&path=${encodeURIComponent(WS_PATH)}#${NAME}-${ISP}`;
   
-  console.log('Subscription Link:', subTxt);
-
   subContent = Buffer.from(subTxt).toString('base64');
+
+  console.log(subContent);
+
   fs.writeFileSync(subPath, subContent);
   console.log('订阅链接已生成并保存。');
 }
