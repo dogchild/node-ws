@@ -131,6 +131,15 @@ async function generateSubLink() {
     return;
   }
 
+  let publicIp = 'Unknown-IP';
+  try {
+    const response = await axios.get('https://api.ipify.org?format=json');
+    publicIp = response.data.ip;
+    console.log(`Public IP: ${publicIp}`);
+  } catch (error) {
+    console.error('Failed to fetch public IP.');
+  }
+
   let ISP = 'Unknown-ISP';
   try {
     const url = Buffer.from('aHR0cHM6Ly9zcGVlZC5jbG91ZGZsYXJlLmNvbS9tZXRh', 'base64').toString();
