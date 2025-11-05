@@ -14,11 +14,11 @@ const FILE_PATH = process.env.FILE_PATH || './tmp';
 const UID = process.env.UID || 'fc425456-5e97-46d8-ba4b-10481183ba24';
 const S_PATH = process.env.S_PATH || UID;
 const PORT = process.env.SERVER_PORT || process.env.PORT || 3005;
-const MY_DOMAIN = process.env.MY_DOMAIN || 'whm-jp.dogchild.eu.org';
+const MY_DOMAIN = process.env.MY_DOMAIN || 'www.google.com';
 const WS_PATH = process.env.WS_PATH || '/ws';
 const CIP = process.env.CIP || 'cf.877774.xyz';
 const CPORT = process.env.CPORT || 443;
-const NAME = process.env.NAME || 'webhostmost';
+const NAME = process.env.NAME || 'Vls';
 
 // --- Setup ---
 if (!fs.existsSync(FILE_PATH)) {
