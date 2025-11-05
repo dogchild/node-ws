@@ -1,10 +1,10 @@
 <div align="center">
 
-# nodejs-x：平台友好型 Node.js 服务
+# node-ws：平台友好型 Node.js 服务
 
 </div>
 
-`nodejs-x` 是一个轻量级的、自包含的 Node.js 应用程序，旨在创建 VLESS-WebSocket 服务。它完全在 Node.js 运行时内部实现协议，**无需下载或运行任何外部进程（如 Xray）**。 
+`node-ws` 是一个轻量级的、自包含的 Node.js 应用程序，旨在创建 VLESS-WebSocket 服务。它完全在 Node.js 运行时内部实现协议，**无需下载或运行任何外部进程（如 Xray），也无需依赖任何 Web 框架（如 Koa）**。 
 
 此设计使得本项目资源消耗极低，并能在有严格进程限制的托管平台（如共享主机、PaaS、Serverless 等）上完美运行。
 
@@ -17,7 +17,7 @@
 本应用的架构极其简洁高效：
 
 1.  **Cloudflare 代理：** 您通过 Cloudflare DNS 将一个域名或子域名（例如 `sub.yourdomain.com`）指向您的服务器 IP 地址，并确保代理状态设置为“已代理”（橙色云朵图标）。
-2.  **Node.js 服务器：** 应用程序启动一个 Koa.js 服务器，在单个端口（`PORT`）上同时监听标准的 HTTP 和 WebSocket 流量。
+2.  **Node.js 服务器：** 应用程序启动一个**原生的 Node.js `http` 服务器**，在单个端口（`PORT`）上同时监听标准的 HTTP 和 WebSocket 流量。
 3.  **协议处理：** 当一个 WebSocket 连接请求到达您配置的路径 (`WS_PATH`) 时，Node.js 服务器会：
     *   验证客户端身份。
     *   解析 VLESS 协议，获取客户端想要访问的目标地址。
@@ -57,7 +57,7 @@
 |---|---|---|---|
 | `PORT` | 否 | `3005` | 平台分配给应用的公开端口。通常由平台自动设置。 |
 | `MY_DOMAIN` | **是** | - | **必须设置。** 您在 Cloudflare 上配置并指向服务器的域名。 |
-| `UID` | 否 | (预设值) | VLESS 服务的用户 ID。 |
+| `UID` | 否 | (预设值) | 服务的用户 ID。 |
 | `WS_PATH` | 否 | `/ws` | WebSocket 使用的路径。 |
 | `S_PATH` | 否 | (UID的值) | 订阅链接的访问路径。 |
 | `CIP` | 否 | `cf.877774.xyz` | (可选) 用于生成订阅链接的优选IP/域名。 |
@@ -75,8 +75,8 @@
 
 ## 📚 更多信息
 
-- [GitHub仓库](https://github.com/dogchild/nodejs-x)
-- [问题反馈](https://github.com/dogchild/nodejs-x/issues)
+- [GitHub仓库](https://github.com/dogchild/node-ws)
+- [问题反馈](https://github.com/dogchild/node-ws/issues)
 
 ---
   

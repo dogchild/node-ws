@@ -1,31 +1,26 @@
 #!/usr/bin/env node
 
 require('dotenv').config({ override: true });
-const Koa = require('koa');
-const websockify = require('koa-websocket');
+const http = require('http');
+const { WebSocketServer, createWebSocketStream } = require('ws');
 const net = require('net');
-const Router = require('@koa/router');
-const { createWebSocketStream } = require('ws');
 const axios = require("axios");
 const os = require('os');
 const fs = require("fs");
 const path = require("path");
 
-const app = websockify(new Koa());
-const router = new Router();
-
 // --- Environment Variables ---
-const FILE_PATH = process.env.FILE_PATH || './tmp';   // 运行目录,sub节点文件保存目录
-const UID = process.env.UID || 'fc425456-5e97-46d8-ba4b-10481183ba24'; // 用户ID
-const S_PATH = process.env.S_PATH || UID;       // 订阅路径
-const PORT = process.env.SERVER_PORT || process.env.PORT || 3005;        // http服务订阅端口
-const MY_DOMAIN = process.env.MY_DOMAIN || 'whm-jp.dogchild.eu.org';        // 部署应用的域名, 必须设置
-const WS_PATH = process.env.WS_PATH || '/ws'; // websocket路径
-const CIP = process.env.CIP || 'cf.877774.xyz';         // 节点优选域名或优选ip  
-const CPORT = process.env.CPORT || 443;                   // 节点优选域名或优选ip对应的端口
-const NAME = process.env.NAME || 'webhostmost';                     // 节点名称
+const FILE_PATH = process.env.FILE_PATH || './tmp';
+const UID = process.env.UID || 'fc425456-5e97-46d8-ba4b-10481183ba24';
+const S_PATH = process.env.S_PATH || UID;
+const PORT = process.env.SERVER_PORT || process.env.PORT || 3005;
+const MY_DOMAIN = process.env.MY_DOMAIN || 'whm-jp.dogchild.eu.org';
+const WS_PATH = process.env.WS_PATH || '/ws';
+const CIP = process.env.CIP || 'cf.877774.xyz';
+const CPORT = process.env.CPORT || 443;
+const NAME = process.env.NAME || 'webhostmost';
 
-// --- Setup --- 
+// --- Setup ---
 if (!fs.existsSync(FILE_PATH)) {
   fs.mkdirSync(FILE_PATH);
   console.log(`${FILE_PATH} is created`);
@@ -40,28 +35,37 @@ function cleanupOldFiles() {
   fs.unlink(subPath, () => {});
 }
 
-// --- HTTP Routes ---
-router.get("/", ctx => {
-  ctx.body = "Hello world!";
-});
-
-router.get(`/${S_PATH}`, ctx => {
-  ctx.type = 'text/plain; charset=utf-8';
-  ctx.body = subContent;
-});
-
-app.use(router.routes()).use(router.allowedMethods());
-
-// --- WebSocket Protocol Implementation ---
-app.ws.use((ctx) => {
-  if (ctx.path !== WS_PATH) {
-    return ctx.websocket.close();
+// --- HTTP Server --- 
+const httpServer = http.createServer((req, res) => {
+  if (req.url === '/') {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('Hello world!');
+  } else if (req.url === `/${S_PATH}`) {
+    res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end(subContent);
+  } else {
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('Not Found');
   }
+});
 
+// --- WebSocket Server ---
+const wss = new WebSocketServer({ noServer: true });
+
+httpServer.on('upgrade', (request, socket, head) => {
+  if (request.url === WS_PATH) {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit('connection', ws, request);
+    });
+  } else {
+    socket.destroy();
+  }
+});
+
+wss.on('connection', (ws) => {
   const userId = UID.replace(/-/g, "");
-  const ws = ctx.websocket;
 
-  ws.once('message', msg => {
+  ws.once('message', (msg) => {
     try {
       const [VERSION] = msg;
       const id = msg.slice(1, 17);
@@ -150,7 +154,7 @@ async function generateSubLink() {
 async function startServer() {
   cleanupOldFiles();
   await generateSubLink();
-  app.listen(PORT, () => console.log(`http server is running on port:${PORT}!`));
+  httpServer.listen(PORT, () => console.log(`http server is running on port:${PORT}!`));
 }
 
 startServer();
