@@ -53,7 +53,8 @@ const httpServer = http.createServer((req, res) => {
 const wss = new WebSocketServer({ noServer: true });
 
 httpServer.on('upgrade', (request, socket, head) => {
-  if (request.url === WS_PATH) {
+  const pathname = request.url.split('?')[0];
+  if (pathname === WS_PATH) {
     wss.handleUpgrade(request, socket, head, (ws) => {
       wss.emit('connection', ws, request);
     });
