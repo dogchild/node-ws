@@ -1,6 +1,6 @@
 {
   "name": "node-ws",
-  "version": "2.0.1",
+  "version": "1.0.0",
   "description": "A self-contained Node.js application for creating a VL-WebSocket service.",
   "main": "index.js",
   "private": true,
