@@ -44,3 +44,4 @@ coverage/
 
 # Backups
 index_o.js
+/.gemini/
