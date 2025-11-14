@@ -39,10 +39,10 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/node-ws:hug
+            ghcr.io/${{ github.repository_owner }}/protect-animals:hug
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
-            org.opencontainers.image.description=Node.js project with VL
+            org.opencontainers.image.description=Node.js project with Hug
             org.opencontainers.image.licenses=MIT
           cache-from: type=gha
           cache-to: type=gha,mode=max
