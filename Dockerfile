@@ -16,10 +16,6 @@ FROM node:lts-slim
 ENV TZ=Asia/Shanghai
 RUN apt-get update && apt-get install -y tzdata && rm -rf /var/lib/apt/lists/*
 
-# 创建非root用户
-RUN groupadd -g 1001 nodejs && \
-    useradd -u 1001 -g nodejs -m node-app
-
 WORKDIR /app
 
 # 从构建阶段复制依赖
@@ -30,14 +26,10 @@ COPY index.js .
 COPY index.html .
 COPY package.json .
 
-# 创建并设置tmp目录权限（默认的FILE_PATH）
+# 创建tmp目录（默认的FILE_PATH）
 RUN mkdir -p /app/tmp && \
-    chown -R node-app:nodejs /app && \
     chmod -R 755 /app/tmp && \
     chmod +x index.js
-
-# 切换到非root用户
-USER node-app
 
 # 暴露端口
 EXPOSE 3005
