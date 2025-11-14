@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>保护动物 - 守护地球家园</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4CAF50, #2196F3);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .section {
+            margin-bottom: 60px;
+        }
+
+        .section h2 {
+            color: #2c5530;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .section h2::after {
+            content: '';
+            display: block;
+            width: 100px;
+            height: 3px;
+            background: #4CAF50;
+            margin: 10px auto;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 1.1rem;
+            color: #666;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            margin-bottom: 50px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+        }
+
+        .card-image {
+            height: 200px;
+            background: linear-gradient(45deg, #4CAF50, #2196F3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: white;
+        }
+
+        .card-content {
+            padding: 25px;
+        }
+
+        .card h3 {
+            color: #2c5530;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .card p {
+            color: #666;
+            line-height: 1.7;
+        }
+
+        .action-section {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            color: white;
+            padding: 60px 40px;
+            border-radius: 20px;
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        .action-section h2 {
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .action-section h2::after {
+            background: white;
+        }
+
+        .action-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .action-item {
+            background: rgba(255,255,255,0.1);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .action-item h4 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+
+        .action-item ul {
+            list-style: none;
+            text-align: left;
+        }
+
+        .action-item li {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .action-item li::before {
+            content: '🌱';
+            position: absolute;
+            left: 0;
+        }
+
+        .footer {
+            background: #2c5530;
+            color: white;
+            text-align: center;
+            padding: 40px 20px;
+            margin-top: 60px;
+        }
+
+        .footer p {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header p {
+                font-size: 1rem;
+            }
+            
+            .section h2 {
+                font-size: 2rem;
+            }
+            
+            .action-section h2 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>🐾 保护动物</h1>
+        <p>守护地球家园 · 共建美好未来</p>
+    </header>
+
+    <div class="container">
+        <section class="section">
+            <h2>触目惊心的数字</h2>
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number">68%</div>
+                    <div class="stat-label">野生动物种群数量在过去50年中下降</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">1M</div>
+                    <div class="stat-label">物种面临灭绝威胁</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">100-1000</div>
+                    <div class="stat-label">物种每年消失</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">75%</div>
+                    <div class="stat-label">陆地环境被人类活动严重改变</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2>保护动物的重要性</h2>
+            <div class="content-grid">
+                <div class="card">
+                    <div class="card-image">🌿</div>
+                    <div class="card-content">
+                        <h3>生态平衡</h3>
+                        <p>每个物种都在生态系统中扮演着重要角色，保护动物就是维护生态平衡，确保自然环境的可持续发展。</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-image">🧬</div>
+                    <div class="card-content">
+                        <h3>生物多样性</h3>
+                        <p>丰富的生物多样性为我们提供食物、药物和原材料，是人类文明发展的重要基础。</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-image">🌍</div>
+                    <div class="card-content">
+                        <h3>环境健康</h3>
+                        <p>动物是环境的指示器，它们的生存状况反映了整个地球生态系统的健康程度。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section action-section">
+            <h2>我们可以做什么</h2>
+            <div class="action-list">
+                <div class="action-item">
+                    <h4>日常行动</h4>
+                    <ul>
+                        <li>不购买野生动物制品</li>
+                        <li>减少塑料使用</li>
+                        <li>支持环保组织</li>
+                        <li>选择可持续产品</li>
+                    </ul>
+                </div>
+                <div class="action-item">
+                    <h4>教育宣传</h4>
+                    <ul>
+                        <li>向朋友家人宣传保护理念</li>
+                        <li>参与动物保护志愿活动</li>
+                        <li>关注濒危动物新闻</li>
+                        <li>分享保护动物知识</li>
+                    </ul>
+                </div>
+                <div class="action-item">
+                    <h4>生活方式</h4>
+                    <ul>
+                        <li>减少肉类消费</li>
+                        <li>选择有机食品</li>
+                        <li>节约能源和用水</li>
+                        <li>使用公共交通</li>
+                    </ul>
+                </div>
+                <div class="action-item">
+                    <h4>技术支持</h4>
+                    <ul>
+                        <li>使用环保技术</li>
+                        <li>支持绿色能源</li>
+                        <li>参与在线保护项目</li>
+                        <li>捐助于保护组织</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer class="footer">
+        <p>🌱 每一个生命都值得被尊重和保护</p>
+        <p>🤝 让我们携手共建人与自然和谐共存的美好家园</p>
+        <p style="margin-top: 20px; opacity: 0.8;">© 2024 保护动物公益项目</p>
+    </footer>
+
+    <script>
+        // 添加一些简单的交互效果
+        document.addEventListener('DOMContentLoaded', function() {
+            // 为统计数字添加动画效果
+            const statNumbers = document.querySelectorAll('.stat-number');
+            
+            const animateNumber = (element) => {
+                const target = element.textContent.replace(/[^0-9]/g, '');
+                const duration = 2000;
+                const step = target / (duration / 16);
+                let current = 0;
+                
+                const timer = setInterval(() => {
+                    current += step;
+                    if (current >= target) {
+                        current = target;
+                        clearInterval(timer);
+                    }
+                    
+                    const suffix = element.textContent.replace(/[0-9]/g, '');
+                    element.textContent = Math.floor(current) + suffix;
+                }, 16);
+            };
+            
+            // 当统计卡片进入视口时开始动画
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        animateNumber(entry.target);
+                        observer.unobserve(entry.target);
+                    }
+                });
+            });
+            
+            statNumbers.forEach(stat => observer.observe(stat));
+            
+            // 为卡片添加点击效果
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                card.addEventListener('click', function() {
+                    this.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        this.style.transform = '';
+                    }, 150);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

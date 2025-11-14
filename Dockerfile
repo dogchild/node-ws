@@ -27,6 +27,7 @@ COPY --from=builder /app/node_modules ./node_modules
 
 # 复制应用文件
 COPY index.js .
+COPY index.html .
 COPY package.json .
 
 # 创建并设置tmp目录权限（默认的FILE_PATH）
