@@ -1,0 +1,19 @@
+{
+  "name": "node-ws",
+  "version": "1.0.0",
+  "description": "A self-contained Node.js application for creating a VL-WebSocket service.",
+  "main": "index.js",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "axios": "^1.12.2",
+    "dotenv": "^17.2.3",
+    "ws": "^8.17.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
