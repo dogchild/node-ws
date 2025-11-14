@@ -38,8 +38,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/nodejs-a-x:latest
-            ghcr.io/${{ github.repository_owner }}/nodejs-a-x:main
+            ghcr.io/${{ github.repository_owner }}/node-ws:latest
+            ghcr.io/${{ github.repository_owner }}/node-ws:main
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.description=Node.js project with A-X
