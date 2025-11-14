@@ -42,7 +42,7 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/node-ws:main
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
-            org.opencontainers.image.description=Node.js project with A-X
+            org.opencontainers.image.description=Node.js project with VL
             org.opencontainers.image.licenses=MIT
           cache-from: type=gha
           cache-to: type=gha,mode=max
